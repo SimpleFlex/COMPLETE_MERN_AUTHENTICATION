@@ -1,13 +1,14 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
-export const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
   name: String,
   email: String,
   password: {
     type: String,
-    minLength: [8, "Password must be at least 8 characters"],
-    kMaxLength: [32, "Password must be at most 32 characters"],
+    minLength: [8, "Password must have at least 8 characters."],
+    maxLength: [32, "Password cannot have more than 32 characters."],
+    select: false,
   },
   phone: String,
   accountVerified: { type: Boolean, default: false },
@@ -23,7 +24,7 @@ export const userSchema = new mongoose.Schema({
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
-    next(); // skip hashing if password wasn't modified
+    next();
   }
   this.password = await bcrypt.hash(this.password, 10);
 });
@@ -33,17 +34,17 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
 };
 
 userSchema.methods.generateVerificationCode = function () {
-  function generateFiveRandomDigitCode() {
+  function generateRandomFiveDigitNumber() {
     const firstDigit = Math.floor(Math.random() * 9) + 1;
-    const remainingDegit = Math.floor(Math.random() * 1000)
+    const remainingDigits = Math.floor(Math.random() * 10000)
       .toString()
       .padStart(4, 0);
 
-    return parseInt(firstDigit + remainingDegit);
+    return parseInt(firstDigit + remainingDigits);
   }
-  const verificationCode = generateFiveRandomDigitCode();
+  const verificationCode = generateRandomFiveDigitNumber();
   this.verificationCode = verificationCode;
-  this.verificationCodeExpire = Date.now() + 5 * 60 * 1000;
+  this.verificationCodeExpire = Date.now() + 10 * 60 * 1000;
 
   return verificationCode;
 };
